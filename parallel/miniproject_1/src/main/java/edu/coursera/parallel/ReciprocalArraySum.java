@@ -193,5 +193,5 @@ public final class ReciprocalArraySum {
         return task.getValue();
     }
 
-//    private static int nChunks;
+
 }
