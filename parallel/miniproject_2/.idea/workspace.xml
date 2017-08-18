@@ -38,8 +38,8 @@
       <file leaf-file-name="StudentAnalyticsTest.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/test/java/edu/coursera/parallel/StudentAnalyticsTest.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="462">
-              <caret line="141" column="62" lean-forward="true" selection-start-line="141" selection-start-column="62" selection-end-line="141" selection-end-column="62" />
+            <state relative-caret-position="189">
+              <caret line="128" column="66" lean-forward="true" selection-start-line="128" selection-start-column="66" selection-end-line="128" selection-end-column="66" />
               <folding>
                 <element signature="e#6270#6271#0" expanded="true" />
                 <element signature="e#6333#6334#0" expanded="true" />
@@ -114,7 +114,7 @@
       <select />
     </treeState>
   </component>
-  <component name="ProjectFrameBounds" extendedState="7">
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="-3" />
     <option name="width" value="640" />
     <option name="height" value="735" />
@@ -453,7 +453,7 @@
       <option name="presentableId" value="Default" />
       <updated>1502825749996</updated>
       <workItem from="1502825755637" duration="7907000" />
-      <workItem from="1502922045347" duration="3550000" />
+      <workItem from="1502922045347" duration="4156000" />
     </task>
     <servers />
   </component>
@@ -490,11 +490,10 @@
     </history-entry>
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="11457000" />
+    <option name="totallyTimeSpent" value="12063000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="1382" height="744" extended-state="7" />
-    <editor active="true" />
+    <frame x="-8" y="-8" width="1382" height="744" extended-state="6" />
     <layout>
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
@@ -668,8 +667,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/test/java/edu/coursera/parallel/StudentAnalyticsTest.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="462">
-          <caret line="141" column="62" lean-forward="true" selection-start-line="141" selection-start-column="62" selection-end-line="141" selection-end-column="62" />
+        <state relative-caret-position="189">
+          <caret line="128" column="66" lean-forward="true" selection-start-line="128" selection-start-column="66" selection-end-line="128" selection-end-column="66" />
           <folding>
             <element signature="e#6270#6271#0" expanded="true" />
             <element signature="e#6333#6334#0" expanded="true" />
