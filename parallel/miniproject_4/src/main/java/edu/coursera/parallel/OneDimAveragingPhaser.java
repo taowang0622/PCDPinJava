@@ -51,9 +51,11 @@ public final class OneDimAveragingPhaser {
     public static void runParallelBarrier(final int iterations,
             final double[] myNew, final double[] myVal, final int n,
             final int tasks) {
-        Phaser ph = new Phaser(0);
+        Phaser ph = new Phaser(0); //"0" means not registering self!!!
+//        Registration of tasks on phaser is for awaitAdvance() method to count the number of threads/tasks that should signal before advancing
         ph.bulkRegister(tasks);
 
+        //creation of tasks/threads
         Thread[] threads = new Thread[tasks];
 
         for (int ii = 0; ii < tasks; ii++) {
@@ -83,7 +85,7 @@ public final class OneDimAveragingPhaser {
 
         for (int ii = 0; ii < tasks; ii++) {
             try {
-                threads[ii].join();
+                threads[ii].join();  //It will block until thread[ii] ends!!!
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -108,6 +110,47 @@ public final class OneDimAveragingPhaser {
     public static void runParallelFuzzyBarrier(final int iterations,
             final double[] myNew, final double[] myVal, final int n,
             final int tasks) {
-        runParallelBarrier(iterations, myNew, myVal, n, tasks);
+        Phaser ph = new Phaser(0); //Not register the current thread/task to phaser
+        ph.bulkRegister(tasks);
+
+        //creation of tasks/threads
+        Thread[] threads = new Thread[tasks];
+
+        for (int ii = 0; ii < tasks; ii++) {
+            final int i = ii;
+
+            threads[ii] = new Thread(() -> {
+                double[] threadPrivateMyVal = myVal;
+                double[] threadPrivateMyNew = myNew;
+
+                for (int iter = 0; iter < iterations; iter++) {
+
+                    int currentPhase = ph.arrive();
+
+                    final int left = i * (n / tasks) + 1;
+                    final int right = (i + 1) * (n / tasks);
+
+                    for (int j = left; j <= right; j++) {
+                        threadPrivateMyNew[j] = (threadPrivateMyVal[j - 1]
+                                + threadPrivateMyVal[j + 1]) / 2.0;
+                    }
+                    ph.awaitAdvance(currentPhase);
+
+                    //SWAP!!!!!====>The part following awaitAdvance() is the most critical part!!!!!!
+                    double[] temp = threadPrivateMyNew;
+                    threadPrivateMyNew = threadPrivateMyVal;
+                    threadPrivateMyVal = temp;
+                }
+            });
+            threads[ii].start();
+        }
+
+        for (int ii = 0; ii < tasks; ii++) {
+            try {
+                threads[ii].join(); //It will block until thread[ii] ends!!!
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
