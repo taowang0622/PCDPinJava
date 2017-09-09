@@ -8,7 +8,7 @@ import edu.rice.pcdp.Actor;
  * TODO Fill in the empty SieveActorActor actor class below and use it from
  * countPrimes to determin the number of primes <= limit.
  */
-public final class SieveActor extends Sieve {
+public final class SieveActor implements Sieve {
     /**
      * {@inheritDoc}
      *
@@ -38,5 +38,9 @@ public final class SieveActor extends Sieve {
         public void process(final Object msg) {
             throw new UnsupportedOperationException();
         }
+    }
+
+    public static void main(String[] args) {
+        new SieveActor().echo("Hello Sieve!!");
     }
 }
