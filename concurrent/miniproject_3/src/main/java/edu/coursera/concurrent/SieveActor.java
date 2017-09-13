@@ -2,11 +2,13 @@ package edu.coursera.concurrent;
 
 import edu.rice.pcdp.Actor;
 
+import static edu.rice.pcdp.PCDP.finish;
+
 /**
  * An actor-based implementation of the Sieve of Eratosthenes.
  *
  * TODO Fill in the empty SieveActorActor actor class below and use it from
- * countPrimes to determin the number of primes <= limit.
+ * countPrimes to determine the number of primes <= limit.
  */
 public final class SieveActor implements Sieve {
     /**
@@ -19,7 +21,22 @@ public final class SieveActor implements Sieve {
      */
     @Override
     public int countPrimes(final int limit) {
-        throw new UnsupportedOperationException();
+        final SieveActorActor actor = new SieveActorActor(2);
+        //Must wait for all tasks to finish before we compute the number of prime numbers======>use finish{}
+        finish(() -> {
+            for (int i = 3; i <= limit; i += 2) {
+                actor.send(i); //Be aware that inside the Lambda expression, the outer variable must be final that is compliant to the idea of functional programming!!
+            }
+        });
+
+        int numOfPrim = 1;
+        SieveActorActor loopActor = actor; //since actor is final, I create another SieveActorActor to get a copy!!!
+        while (loopActor.getNextActor() != null) {
+            numOfPrim++;
+            loopActor = loopActor.getNextActor();
+        }
+
+        return numOfPrim;
     }
 
     /**
@@ -27,6 +44,17 @@ public final class SieveActor implements Sieve {
      * parallel.
      */
     public static final class SieveActorActor extends Actor {
+        //local state
+        private int localPrim;
+        private SieveActorActor nextActor; //for constructing actor-based pipeline!!
+
+        //Initialize the local state of the current actor
+        private SieveActorActor(int localPrim) {
+            this.localPrim = localPrim;
+            this.nextActor = null;
+        }
+
+
         /**
          * Process a single message sent to this actor.
          *
@@ -36,11 +64,25 @@ public final class SieveActor implements Sieve {
          */
         @Override
         public void process(final Object msg) {
-            throw new UnsupportedOperationException();
+            Integer candidate = (Integer)msg;
+
+            boolean isMultipleOfLocalPrim = ((candidate % localPrim) == 0);
+            if (!isMultipleOfLocalPrim) {
+                if (nextActor == null) { //Avoiding the null pointer exception and at first nextActor must be null!!
+                    nextActor = new SieveActorActor(candidate);
+                    nextActor.send(candidate);
+                } else {
+                    nextActor.send(candidate);
+                }
+            } //If it's the multiple of the local prime, then swallow it, that means not passing it to next stage/actor of the pipeline
+        }
+
+        public SieveActorActor getNextActor() {
+            return nextActor;
         }
     }
 
     public static void main(String[] args) {
-        new SieveActor().echo("Hello Sieve!!");
+        new SieveActor().countPrimes(10);
     }
 }

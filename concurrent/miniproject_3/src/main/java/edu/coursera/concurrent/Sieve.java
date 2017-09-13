@@ -12,8 +12,4 @@ public interface Sieve {
      * @return The number of primes that are <= limit.
      */
     public abstract int countPrimes(final int limit);
-
-    public default void echo(String message){
-        System.out.println(message);
-    }
 }
