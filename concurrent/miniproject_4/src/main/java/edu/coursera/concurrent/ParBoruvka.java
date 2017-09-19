@@ -4,10 +4,15 @@ import edu.coursera.concurrent.AbstractBoruvka;
 import edu.coursera.concurrent.SolutionToBoruvka;
 import edu.coursera.concurrent.boruvka.Edge;
 import edu.coursera.concurrent.boruvka.Component;
+import sun.awt.datatransfer.DataTransferer;
 
 import java.util.Queue;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.concurrent.locks.ReentrantLock;
+
+import static edu.rice.pcdp.PCDP.async;
+import static edu.rice.pcdp.PCDP.finish;
 
 /**
  * A parallel implementation of Boruvka's algorithm to compute a Minimum
@@ -27,8 +32,58 @@ public final class ParBoruvka extends AbstractBoruvka<ParBoruvka.ParComponent> {
      */
     @Override
     public void computeBoruvka(final Queue<ParComponent> nodesLoaded,
-            final SolutionToBoruvka<ParComponent> solution) {
-        throw new UnsupportedOperationException();
+                               final SolutionToBoruvka<ParComponent> solution) {
+
+
+//        Beware that, unlike in most collections,
+//        the size method is NOT a constant-time operation.
+//        Because of the asynchronous nature of these queues, determining the current number of elements
+//        requires a traversal of the elements, and so may report inaccurate results
+//        while (nodesLoaded.size() > 1) {
+
+        //since ConcurrentLinkedQueue is unbounded, size() and remove() are super time-consuming!!!
+
+        ParComponent currentNode = null;
+//        while (!nodesLoaded.isEmpty()){
+//            currentNode = nodesLoaded.poll();  //Since computeBoruvka() on another thread may occur in between in which case currentNode would be null!!!
+        while ((currentNode = nodesLoaded.poll()) != null) {
+            //PROCESSING THE CURRENT NODE!!!
+            if (!currentNode.lock.tryLock()) { // if the current node is processing on the other thread
+                continue;
+            }
+            if (currentNode.isDead) { //if the current node is already merged======>LAZY DELETION!!!
+                currentNode.lock.unlock(); //IMPORTANT!!!
+                continue;
+            }
+
+            Edge<ParComponent> minEdge = currentNode.getMinEdge();
+            if (minEdge == null) {
+                solution.setSolution(currentNode); //Recording the solution!!!that is minimum spanning tree!!!
+                break;
+            }
+
+            ParComponent other = minEdge.getOther(currentNode);
+            //PROCESSING THE OTHER NODE!!!
+            if (!other.lock.tryLock()) {
+                //fixup=====>key point in this parallel algorithm!!!
+                currentNode.lock.unlock(); //IMPORTANT!!!!!!!
+                nodesLoaded.add(currentNode); //putting the removed node back to the forest!!
+                continue;
+            }
+            if (other.isDead) { //has been merged
+                other.lock.unlock(); //IMPORTANT!!!
+                currentNode.lock.unlock(); //IMPORTANT!!!
+                nodesLoaded.add(currentNode);  //MUST PUT IT BACK!!!Since spanning tree must cover all nodes!!!!and it's for undirected/bi-directed graph!!
+                continue;
+            }
+
+            other.isDead = true;
+            currentNode.merge(other, minEdge.weight()); //new tree
+            currentNode.lock.unlock(); //IMPORTANT!!
+            other.lock.unlock(); //IMPORTANT!!
+//            nodesLoaded.remove(other); //Since there are tons of nodes, this method is very inefficient!!!!===>using Lazy Deletion!!!
+            nodesLoaded.add(currentNode); //back to the forest!!
+        }
     }
 
     /**
@@ -38,10 +93,16 @@ public final class ParBoruvka extends AbstractBoruvka<ParBoruvka.ParComponent> {
      */
     public static final class ParComponent extends Component<ParComponent> {
         /**
-         *  A unique identifier for this component in the graph that contains
-         *  it.
+         * A unique identifier for this component in the graph that contains
+         * it.
          */
         public final int nodeId;
+
+
+        /**
+         * ReentrantLock for being thread-safe!!
+         */
+        ReentrantLock lock = new ReentrantLock();
 
         /**
          * List of edges attached to this component, sorted by weight from least
@@ -103,7 +164,7 @@ public final class ParBoruvka extends AbstractBoruvka<ParBoruvka.ParComponent> {
 
         /**
          * {@inheritDoc}
-         *
+         * <p>
          * Edge is inserted in weight order, from least to greatest.
          */
         public void addEdge(final Edge<ParComponent> e) {
@@ -133,7 +194,7 @@ public final class ParBoruvka extends AbstractBoruvka<ParBoruvka.ParComponent> {
          * Merge two components together, connected by an edge with weight
          * edgeWeight.
          *
-         * @param other The other component to merge into this component.
+         * @param other      The other component to merge into this component.
          * @param edgeWeight Weight of the edge connecting these components.
          */
         public void merge(final ParComponent other, final double edgeWeight) {
@@ -148,9 +209,9 @@ public final class ParBoruvka extends AbstractBoruvka<ParBoruvka.ParComponent> {
                 while (i < edges.size()) {
                     final Edge<ParComponent> e = edges.get(i);
                     if ((e.fromComponent() != this
-                                && e.fromComponent() != other)
+                            && e.fromComponent() != other)
                             || (e.toComponent() != this
-                                && e.toComponent() != other)) {
+                            && e.toComponent() != other)) {
                         break;
                     }
                     i++;
@@ -158,19 +219,19 @@ public final class ParBoruvka extends AbstractBoruvka<ParBoruvka.ParComponent> {
                 while (j < other.edges.size()) {
                     final Edge<ParComponent> e = other.edges.get(j);
                     if ((e.fromComponent() != this
-                                && e.fromComponent() != other)
+                            && e.fromComponent() != other)
                             || (e.toComponent() != this
-                                && e.toComponent() != other)) {
+                            && e.toComponent() != other)) {
                         break;
                     }
                     j++;
                 }
 
                 if (j < other.edges.size() && (i >= edges.size()
-                            || edges.get(i).weight()
-                            > other.edges.get(j).weight())) {
+                        || edges.get(i).weight()
+                        > other.edges.get(j).weight())) {
                     newEdges.add(other.edges.get(j++).replaceComponent(other,
-                                this));
+                            this));
                 } else if (i < edges.size()) {
                     newEdges.add(edges.get(i++).replaceComponent(other, this));
                 }
@@ -236,11 +297,11 @@ public final class ParBoruvka extends AbstractBoruvka<ParBoruvka.ParComponent> {
          * Constructor.
          *
          * @param from From edge.
-         * @param to To edges.
-         * @param w Weight of this edge.
+         * @param to   To edges.
+         * @param w    Weight of this edge.
          */
         public ParEdge(final ParComponent from, final ParComponent to,
-                final double w) {
+                       final double w) {
             fromComponent = from;
             toComponent = to;
             weight = w;
@@ -306,7 +367,7 @@ public final class ParBoruvka extends AbstractBoruvka<ParBoruvka.ParComponent> {
          * {@inheritDoc}
          */
         public ParEdge replaceComponent(final ParComponent from,
-                final ParComponent to) {
+                                        final ParComponent to) {
             if (fromComponent == from) {
                 fromComponent = to;
             }

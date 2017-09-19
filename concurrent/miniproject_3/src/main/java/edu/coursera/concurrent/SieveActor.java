@@ -84,5 +84,6 @@ public final class SieveActor implements Sieve {
 
     public static void main(String[] args) {
         new SieveActor().countPrimes(10);
+
     }
 }
