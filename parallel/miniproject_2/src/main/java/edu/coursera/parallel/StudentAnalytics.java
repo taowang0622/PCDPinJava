@@ -100,11 +100,37 @@ public final class StudentAnalytics {
      */
     public String mostCommonFirstNameOfInactiveStudentsParallelStream(
             final Student[] studentArray) {
-        return Stream.of(studentArray).parallel().filter(student -> !student.checkIsCurrent())
+//        return Stream.of(studentArray).parallel().filter(student -> !student.checkIsCurrent())
+//                .collect(Collectors.groupingBy(Student::getFirstName, Collectors.counting()))
+//                .entrySet().parallelStream().max(Map.Entry.comparingByValue())
+//                .get().getKey();
+
+        // no need to create the second parallel stream
+        // the first one is OK as the data set is so huge that parallelism is needed
+        // after the first one's terminal operation ".collect", the data set shrinks a lot
+        // after that, creating a parallel stream is expensive!!
+        // REMEMBER: STREAM IS EXPENSIVE!!!!!!! ==> AFTER CHANGING THE SECOND PARALLEL STREAM TO STREAM, speedup goes up from 0.2 to 1.8!!!!
+//        return Stream.of(studentArray).parallel().filter(student -> !student.checkIsCurrent())
+//                .collect(Collectors.groupingBy(Student::getFirstName, Collectors.counting()))
+//                .entrySet().stream().max(Map.Entry.comparingByValue())
+//                .get().getKey();
+
+
+        //  A for loop through an array is extremely lightweight both in terms of heap and CPU usage
+        // ONLY WHEN DATA SET IS HUGE, STREAM CAN BE USED WITH PARALLELISM!!!
+        // OTHERWISE, A SIMPLE FOR LOOP IS MUCH MUCH MUCH FASTER!!!
+        Set<Map.Entry<String, Long>> entries = Stream.of(studentArray).parallel().filter(student -> !student.checkIsCurrent())
                 .collect(Collectors.groupingBy(Student::getFirstName, Collectors.counting()))
-                .entrySet().parallelStream()
-                .collect(Collectors.maxBy(Comparator.comparing(Map.Entry::getValue)))
-                .get().getKey();
+                .entrySet();
+        long maxCount = 0;
+        String mostCommonFirstName = "";
+        for (Map.Entry<String, Long> entry : entries) {
+            if (entry.getValue() > maxCount) {
+                maxCount = entry.getValue();
+                mostCommonFirstName = entry.getKey();
+            }
+        }
+        return mostCommonFirstName;
     }
 
     /**
@@ -140,7 +166,8 @@ public final class StudentAnalytics {
      */
     public int countNumberOfFailedStudentsOlderThan20ParallelStream(
             final Student[] studentArray) {
-        return Arrays.stream(studentArray).parallel().filter(student -> !student.checkIsCurrent() && student.getAge() > 20 && student.getGrade() < 65)
-                .collect(Collectors.counting()).intValue();
+        return (int) Arrays.stream(studentArray)
+                .parallel()
+                .filter(student -> !student.checkIsCurrent() && student.getAge() > 20 && student.getGrade() < 65).count();
     }
 }

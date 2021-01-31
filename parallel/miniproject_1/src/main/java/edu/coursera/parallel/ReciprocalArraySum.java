@@ -142,11 +142,15 @@ public final class ReciprocalArraySum {
             return value;
         }
 
-
+        // TODO
         @Override
         protected void compute() {
             if ((endIndexExclusive - startIndexInclusive) < SEQUENTIAL_THRESHOLD) { //base case!!!
-                this.value = seqArraySum(Arrays.copyOfRange(input, startIndexInclusive, endIndexExclusive));
+                // copy the subset of the array that can take O(n). If array is huge, that is very expensive!!
+                // this.value = seqArraySum(Arrays.copyOfRange(input, startIndexInclusive, endIndexExclusive));
+                for (int i = startIndexInclusive; i < endIndexExclusive; i++) {
+                    this.value += 1 / input[i];
+                }
             } else { //recursive case!!!!
                 List<ReciprocalArraySumTask> taskList = new ArrayList<>();
                 for (int i = 0; i < nChunks; i++) {
@@ -155,6 +159,8 @@ public final class ReciprocalArraySum {
                     int endIndex = getChunkEndExclusive(i, nChunks, nElements);
                     taskList.add(new ReciprocalArraySumTask(startIndexInclusive + startIndex, startIndexInclusive + endIndex, input, nChunks));
                 }
+                // tasks in taskList will be run in the child threads of this thread!!
+                // this blocks the current thread until all tasks are done or one exception is thrown!!
                 invokeAll(taskList);
                 taskList.forEach(task -> this.value += task.getValue());
             }
@@ -171,7 +177,7 @@ public final class ReciprocalArraySum {
      * @return The sum of the reciprocals of the array input
      */
     protected static double parArraySum(final double[] input) {
-        assert input.length % 2 == 0; //ASSERTION!!!!!===>input.length % 2 == 0; is an invariant!!!
+//        assert input.length % 2 == 0; //ASSERTION!!!!!===>input.length % 2 == 0; is an invariant!!!
 
         return parManyTaskArraySum(input, 2);
     }
@@ -189,9 +195,11 @@ public final class ReciprocalArraySum {
     protected static double parManyTaskArraySum(final double[] input,
                                                 final int numTasks) {
         ReciprocalArraySumTask task = new ReciprocalArraySumTask(0, input.length, input, numTasks);
-        ForkJoinPool.commonPool().invoke(task);
+        // main thread => a child thread(task will be run on) => "numTasks" # of child threads(subtasks of the task) =>
+        // => "numTasks" # of child threads of one subtask thread => .... (recursion!!)
+        ForkJoinPool pool = new ForkJoinPool(numTasks);  //  numTasks is the parallelism level(A.K.A # of cores!!)
+        pool.invoke(task);
+//        ForkJoinPool.commonPool().invoke(task);
         return task.getValue();
     }
-
-
 }
