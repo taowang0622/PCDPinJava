@@ -1,18 +1,12 @@
 package edu.coursera.concurrent;
 
-import edu.coursera.concurrent.AbstractBoruvka;
-import edu.coursera.concurrent.SolutionToBoruvka;
-import edu.coursera.concurrent.boruvka.Edge;
 import edu.coursera.concurrent.boruvka.Component;
-import sun.awt.datatransfer.DataTransferer;
+import edu.coursera.concurrent.boruvka.Edge;
 
-import java.util.Queue;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.locks.ReentrantLock;
-
-import static edu.rice.pcdp.PCDP.async;
-import static edu.rice.pcdp.PCDP.finish;
 
 /**
  * A parallel implementation of Boruvka's algorithm to compute a Minimum
@@ -56,6 +50,7 @@ public final class ParBoruvka extends AbstractBoruvka<ParBoruvka.ParComponent> {
                 continue;
             }
 
+            // Maybe the graph is processed, set the solution.
             Edge<ParComponent> minEdge = currentNode.getMinEdge();
             if (minEdge == null) {
                 solution.setSolution(currentNode); //Recording the solution!!!that is minimum spanning tree!!!

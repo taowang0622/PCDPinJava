@@ -6,7 +6,7 @@ import java.util.ArrayList;
 /**
  * An example sequential implementation of the Sieve of Eratosthenes.
  */
-public final class SieveSequential implements Sieve {
+public final class SieveSequential extends Sieve {
     /**
      * {@inheritDoc}
      */

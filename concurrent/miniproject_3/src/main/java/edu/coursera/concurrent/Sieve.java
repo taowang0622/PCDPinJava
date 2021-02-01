@@ -3,7 +3,7 @@ package edu.coursera.concurrent;
 /**
  * An abstract class that exposes a single countPrimes interface for testing.
  */
-public interface Sieve {
+public abstract class Sieve {
     /**
      * Counts the number of prime numbers <= the provided limit using the Sieve
      * of Eratosthenes.
